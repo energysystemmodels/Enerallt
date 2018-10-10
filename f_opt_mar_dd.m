@@ -4,57 +4,7 @@
 % flow through the network to minimize the total operation cost of the whole system.
 %__________________________________________________________________________
 % 1) Input arguments
-% Choose only one of the three methods below
-
-% 1.1) Using this module as a function
-%function [Sup_tot, Exch_opt, sys_cost]=f_opt_mar_dd(Demand,Cost,Pow,NTC)
-
-%--------------------------------------------------------------------------
-% 1.2) Reading input data from this file
-tic
-h=1;
-Demand=[450 800 600 350]';      % power demand in each node
-Demand=repmat(Demand,1,h);
-n=size(Demand,1);
-
-P1=[200 300 300];
-P2=[140 300 100 200];
-P3=[240 100 250];
-P4=[150 100 200 100 200];
-
-C1=[30 41 82];
-C2=[44 45 46 80];
-C3=[30 60 80];
-C4=[34 44 50 10 10];
-
-
-Coff=[0.2 0.2 .2 0.2];
-% from (row) and to (coloumn)
-Ntc=[0   60  90   50;
-     60  0   50   0;
-     90  50  0    100;
-     0   0   100  0];
-NTC=repmat(Ntc,1,1,h);
-
-
-Pow=cell(n,h);
-Cost=cell(n,h);
-
-for t=1:h
-Pow{1,t}=P1;Pow{2,t}=P2;Pow{3,t}=P3;Pow{4,t}=P4;
-Cost{1,t}=C1;Cost{2,t}=C2;Cost{3,t}=C3;Cost{4,t}=C4;
-end
-
-%--------------------------------------------------------------------------
-% 1.3) reading input data from workspace (from f_nd_7R_dd)
-% vis=0;
-% Demand=evalin( 'base', 'Demand');
-% Pow=evalin( 'base', 'Pow1');
-% Cost=evalin( 'base', 'Cost1');
-% NTC=evalin( 'base', 'Ntc');
-% %cost_min=evalin( 'base', 'cost_min');
-% Coff=evalin( 'base', 'Coff');
-
+function [Sup_tot, Exch_opt, sys_cost]=f_opt_mar_dd(Demand,Cost,Pow,NTC)
 %____________________________________________________________________________
 % 2) Preparation
 
@@ -103,7 +53,7 @@ for t=1:h                     % Time steps in each run
       for j=1:n
           f(nvar+j*length(Cost{i,t})+1:nvar+(j+1)*length(Cost{i,t})) = f(nvar+j*length(Cost{i,t})+1:nvar+(j+1)*length(Cost{i,t})) + t_cost;
       end
-    nvar=length(Cost{i})*(n+1)+nvar;
+    nvar=length(Cost{i,t})*(n+1)+nvar;
     end
 end
 %---------------------------------------
@@ -158,27 +108,6 @@ for t=1:h
 end
 
 ncost_tot = ncost;
-% The sum of power production and export from each supply mode shouldn't exceed the max power capacity of that mode
-A2= spalloc(ncost_tot*h,length(f),n*length(Cost{1,1})*h*n);   % Number of equations = supply modes in all nodes multiplied by time steps)
-b2=[];
-hrow=0;
-hcol=0;
-for t=1:h
-    ncost=0;
-    nvar=0;
-    for i=1:n
-            A2(hrow+1+ncost:hrow+ncost+length(Cost{i,t}),hcol+nvar+1:hcol+nvar+(n+1)*length(Cost{i,t}))=repmat(eye(length(Cost{i,t})),1,n+1);
-            ncost=ncost+length(Cost{i,t});
-            nvar=length(Cost{i,t})*(n+1)+nvar;
-            b2=[b2 Pow{i,t}];
-    end
-    hrow=hrow+ncost_tot;
-    hcol=hcol+nvar;
-end
-
-b2=b2'; 
-A=[A1;A2];
-b=[b1;b2];
 
 % 3.4.2) Equality constraints (Aeq.X = beq)
 % Energy balance for each node (n equations)
@@ -191,9 +120,6 @@ for t=1:h
     for i=1:n
         Aeq1(hrow+i,hcol+nvar+1:hcol+nvar+length(Cost{i,t}))=1;          % Production of own plants
         Aeq1(hrow+i,hcol+nvar+length(Cost{i,t})+1:hcol+nvar+(n+1)*length(Cost{i,t}))=-1;     % Import from other regions
-
-        %Aeq1(hrow+i,hcol+z+i*length(Cost{i,t})+1:hcol+z+(i+1)*length(Cost{i,t}))=1;       % Just for prepration for the following loop
-        %Aeq2(hrow+z+1:hrow+z+length(Cost{i,t}))=1;                             % Production of plants equal to demand
         nvar2=0;
         for j=1:n 
             Aeq1(hrow+i,hcol+nvar2+i*length(Cost{j,t})+1:hcol+nvar2+(i+1)*length(Cost{j,t}))=Aeq1(hrow+i,hcol+nvar2+i*length(Cost{j,t})+1:hcol+nvar2+(i+1)*length(Cost{j,t}))+1; % Export to other regions
@@ -235,82 +161,4 @@ for t=1:h
     end
     Sup_tot(:,t)=Demand(:,t)-sum(Exch_opt(:,:,t),1)'+sum(Exch_opt(:,:,t),2);
 end
-
-en_balance=fix(sum(sum(Demand))-sum(sum((Sup_tot))));               % Test: energy balance
-Exch_opt=fix(Exch_opt);
-Sup_tot=fix(Sup_tot);
-%--------------------------------------------------------------------------
-% 4.2) Postprocessing
-% 4.2.1) Area prices
-Supp_curve=cell(n,1);
-for i=1:n
-    [Cost{i}, I]=sort(Cost{i});
-    Pow{i}=Pow{i}(I);
-    Supp_curve{i}=suppcurve( cumsum(Pow{i}), Cost{i}, Coff(i));
-end
-
-Area_p=zeros(n,1);
-for i=1:n
-    if fix(Sup_tot(i))==0
-        warning(['No need for power production in region '  num2str(i)  ' !*'])
-        Area_p(i)=[];
-    else
-    Area_p(i)=Supp_curve{i}(Sup_tot(i));
-    end
-end
-
-toc
-                                   
-%--------------------------------------------------------------------------
-% 4.2.2) Area prices before the trade
-my_subindex = @(A,r,c) A(r,c);      % An anonymous function to index a matrix
-                                    % value = my_subindex(Matrix,row,column); 
-
-% 4.2.3) System price 
-P=[];
-C=[];
-for i=1:n
-P=[P (Pow{i})];
-C=[C (Cost{i})];
-end
-[Cost_sys, I_ns]=sort(C);
-Pow_sys=P(I_ns);
-                                                                      
-Supp_cur_sys=suppcurve( cumsum(Pow_sys), Cost_sys, mean(Coff));
-sys_p=my_subindex(Supp_cur_sys,1,(find(1:max(cumsum(Pow_sys))>=sum(Demand),1)));  % Initial system price
-%__________________________________________________________________________
-% 5) Visualization
-figure
-Area_p0=zeros(n,1);
-for i=1:n
-subplot(round(n/2+1),2,i)
-plot(1:max(cumsum(Pow{i})),Supp_curve{i});hold on;
-% Before trade
-if max(cumsum(Pow{i}))<Demand(i)
-    warning(['Region number ' num2str(i) ' is not able to supply its demand without imports!'])
-    Area_p0(i)=250;
-else
-    Area_p0(i)=my_subindex(Supp_curve{i},1,Demand(i));
-end
-X=[0 Demand(i) ;Demand(i) Demand(i)];
-Y=[Area_p0(i) Area_p0(i) ; Area_p0(i) 0 ];
-line(X,Y,'Color','r','LineStyle','--');hold on;
-% After trade
-X=[0  Sup_tot(i);Sup_tot(i) Sup_tot(i)];
-Y=[Supp_curve{i}(Sup_tot(i)) Supp_curve{i}(Sup_tot(i)); Supp_curve{i}(Sup_tot(i)) 0 ];
-line(X,Y,'Color','black','LineStyle','-.');hold on;
-xlabel('Quantity (MW)');ylabel('Price (€/MWh)');title(['Node ' num2str(i)]);
-xlim([0 1.1*max(cumsum(Pow{i}))])
-ylim([0 1.1*max(Supp_curve{i})])
-text(0.2*Demand(i) ,Area_p(i)+4,[num2str(Area_p(i) ,'%.1f') '€'],'FontSize',8);
-end
-
-subplot(round(n/2+1),2,i+1)
-plot(1:max(cumsum(Pow_sys)),Supp_cur_sys);hold on;
-X=[0 sum(Demand); sum(Demand) sum(Demand)];
-Y=[sys_p sys_p; sys_p 0];
-line(X,Y,'Color','r','LineStyle','--');hold on;
-xlabel('Quantity (MW)');ylabel('Price (€/MWh)');title('Nordic system');
-xlim([0 1.1*max(cumsum(Pow_sys))])
-text(0.2*sum(Demand) ,sys_p+4,[num2str(sys_p ,'%.2f') '€'],'FontSize',8); 
-
+%en_balance=fix(sum(sum(Demand))-sum(sum((Sup_tot))))               % Test: energy balance
