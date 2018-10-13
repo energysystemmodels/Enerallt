@@ -12,22 +12,20 @@
 clear all
 close all
 save_name='Ref_7R';         % Name of the file for saving the results
-Change=2;
-h=24*4+10;                          % An hour to see the sample table results
+fig_r=1;                    % Number of region to see some figures of the results for
+h=24*4+10;                  % A sample hour to see the table results
 %---------------------------------------------------------------------------------
 % 1.1) Input data
 td_1=1;                % The beginning day of the analysis
-td_n=60;               % The last day of the analysis
+td_n=15;               % The last day of the analysis
 n=6;                   % Number of regions to be simulated
 Region_sys=1:5;        % The regions that are in one system price calculations
 Region_wv=[1 2 5];     % Regions that have hydropower water value calculations
 peak_price=1000;        % The electricity price when there is no enough suply in the market (to indicte those hours)
 yr=2014;               % The year of the analysis
-% t_d_fi=+1;           % Time difference between Finland and other countries (central EU +...)
 %------------------------------------------------------------------------
 % 2) Prepration and initialization 
 % 2.1) Timeframe
-
 nd=td_n-td_1+1;        % Number of days (if you wish for hours less than one day, you may consider changing this)
 
 th_1=24*(td_1-1)+1;    
@@ -42,7 +40,7 @@ nh=th_n-th_1+1;        % Number of hours in the analysis
     El_pro_vre1,El_pro_vre2,El_pro_vre3,El_pro_vre4,El_pro_nuc,El_chp_ind_hh,El_pro_fix_hh,...
     El_cap_hyd,El_eff_hyd,Hyd_res_dd,Hyd_infl_dd,St_hyd,Cost_hyd_corr,Wv_seg,Cost_wv,Cost_hyd_coff,St_begin,St_min,Ind_hyd,...
     El_pro_chp1,El_pro_chp,Pth_chp,Dh_pro_chp,Dh_pro_boil,Dh_pro_hob,F_chp1_r,F_chp2_r,F_boil_r,F_hob_r,El_chp1_mar,El_chp2_mar,El_ppchp2_mar,El_ppchp_mar,...
-    Cost_chp1_pool,Cost_chp2_pool,Cost_p,Cost_r,Cost_seg,Name_pool,Name_r]=f_esm_dd(n,th_1,th_n,Change);
+    Cost_chp1_pool,Cost_chp2_pool,Cost_p,Cost_r,Cost_seg,Name_pool,Name_r]=f_esm_dd(n,th_1,th_n);
 clear f_esm_dd
 tic
 
@@ -83,20 +81,19 @@ for i=1:n_dd-7
 end
 
 El_pro_vre=El_pro_vre1+El_pro_vre2+El_pro_vre3+El_pro_vre4;
-
+%---------------------------------------------------------------------------
 % 2.4) Building required matrixes  
 
 bz_subindex = @(A,r,c) A(r,c);      % An anonymous function to index a matrix (value = bz_subindex(Matrix,row,column))
 
 El_pro_hyd=zeros(nh,n);             % Actual hydropower production (MWh/h)
-Hyd_reg_infl=zeros(n,nd);             % Regulated hydropower (total inflow for one day minus on-regulated hydro)
+Hyd_reg_infl=zeros(n,nd);           % Regulated hydropower (total inflow for one day minus on-regulated hydro)
 Stor_pre=zeros(n,nd);               % Storage residual from the previous day after bidding to the market
 Stor_pre(:,1)=St_begin;             % Resrvoir level at the beginning of the first day 
-Hyd_unaccepted=zeros(n,nd);                         % Residual hydro from production planning of the day before (if not sold in the market)
+Hyd_unaccepted=zeros(n,nd);                    % Residual hydro from production planning of the day before (if not sold in the market)
 Hyd_storage=zeros(n,nd);                       % Unused hydro total
 
-% El_dem_exch=zeros(n,nh);                       % The power demand offerd to the pool from each region (after domestic inflexible and non-market participant production)
-Pow_act=zeros(n,np,nh);                            % The actual power production in each region-hour
+Pow_act=zeros(n,np,nh);                        % The actual power production in each region-hour
 Pow_mar=cell(n,nd);                            % The power production mix offerd to the pool from each region at each hour (not sorted, not guaranteed to be bought)
 Cost_mar=cell(n,nd);                           % The cost matrix of power production mix for each hour-region presented to the pool (not sorted)
 Pow_sort=cell(n,nh);                                % The sorted power production mix offerd to the pool from each region at each hour (sorted by their costs: supply curve)
@@ -114,12 +111,9 @@ El_imp_crit=zeros(nh,n);                         %LATER should be defined how to
 % Caculation of Excess power
 El_dem_res=El_dem_pool-El_pro_vre;      % Net residual demand: demand after fixed power, fixed import, and domestic VRE
 El_exp_crit_dom=El_dem_res.*(El_dem_res<0);    %(-) sign         % DOMESTIC critical excess (without trade): demand after fixed power, fixed import, and domestic VRE
-
 El_exp_crit_tech= El_exp_crit_dom+repmat((sum(Ntc,2))',nh,1);     %NOTICE: Ntc should be corrected if NTC is used                        % Critical excess assuming full-export possibilities: demand after fixed power, fixed import, and domestic VRE
 El_exp_crit_tech(El_exp_crit_tech>0)=0;
-
 El_exp_crit_mar=zeros(nh,n);     % Critical excess (after power market): demand after fixed power, fixed import, and domestic VRE, and trade with other countries
-
 %_______________________________________________________________________________________________
 % 3) Analysis 
 % 3.1) Water value (Weekly)
@@ -182,11 +176,10 @@ for d=1:nd              % d: count of day
          
             Pow_mar{r,h}=Pow_pool(:,r);
             Cost1=Cost_mar{r,h};
-         
             II=find(fix(Pow_pool(:,r)));
             Power1=bz_subindex(Pow_pool(:,r),(fix(Pow_pool(:,r))>0),1);           % If some power production modes ar zero in that hour-region, they are excluded
             Cost1=Cost1(fix(Pow_pool(:,r))>0);
-            [Cost_s, I_s]=sort(Cost1);           % Sorting the cost and power vectors ( for the creation of supply curve)
+            [Cost_s, I_s]=sort(Cost1);               % Sorting the cost and power vectors ( for the creation of supply curve)
             Pow_sort{r,h}=Power1(I_s)';              % Constructing the power supply matrix for all the regions (cell)    
             Cost_sort{r,h}=Cost_s';
             I_sort{r,k}=II(I_s);                          % This is the matrix of indexs of NON-ZERO power production modes in Pow_pool sorted based on their cost
@@ -196,17 +189,13 @@ for d=1:nd              % d: count of day
         % Power price in the external market before trade with NordPool
         A1=cumsum(Pow_sort{6,h});
         [Sup_uk,Cost_uk ]=suppcurve_dis(A1, Cost_sort{6,h}, Cost_r(6),Cost_seg(6));
- 
-
         i1=find(Sup_uk>=El_dem_pool(h,6),1);
         Area_p_uk(h)=Cost_uk(i1);
     end    
     %-----------------------------------------------------------------------------------
     % 3.3) Power market optimization
-    % The matrixes of Demand, Cost and Power are sent ot the function
-    % f_np_7R_dd so that the power market (including the network) will be
-    % optimized. The outcome are area prices (Area_p), final production in
-    % each region (Sup_tot), Optimal network flows (Exch_opt), the
+    % The matrixes of Demand, Cost and Power are sent ot the function f_np_7R_dd so that the power market (including the network) will be
+    % optimized. The outcome are area prices (Area_p), final production in each region (Sup_tot), Optimal network flows (Exch_opt), the
     % information about the share of last producing unit, and system prices (sys_p).
     [Area_p0,Sup_tot, Exch_opt,Ind_last,Sup_last,Sys_p0]=f_np_dd(El_dem_pool(h1:h2,:)', Pow_sort(:,h1:h2),...
     Cost_sort(:,h1:h2),NTC(:,:,h1:h2),Cost_r,Cost_seg,Region_sys,peak_price);
@@ -415,35 +404,8 @@ title( 'Hourly hydro production Norway (MWh/h)');legend('Simulation by Enerallt 
 xlabel('Weeks in the examined period');ylim([0 1.2* max(El_hyd_his(th_1:th_n,3))])
 set(gca, 'Xtick',0:24*7:24*td_n, 'XtickLabel', fix(td_1/7):td_n/7,'XGrid','on');
 
-
-% figure
-% plot(El_act_chp(:,1));hold on;plot(El_chp_his_fi(th_1:th_n));hold on;
-% title( 'Hourly power production from CHP-DH Finland (MWh/h)');legend('Simulation by Enerallt','Historical data (2014)')
-% xlabel('Hours in the examined period');ylim([0 1.2* max(El_chp_his_fi(th_1:th_n))])
-% 
-fig_r=1;
 X=th_1:th_n;
 figure
-
-% subplot(2,2,1)
-% plot(El_dem_tot(:,fig_r)+El_dem_exch(:,fig_r),'LineStyle','-');hold on;xlim([th_1 th_n]);
-% area(X',[ El_act_nuc(:,fig_r) El_pro_fix_hh(th_1:th_n,fig_r) ],'LineStyle','none');
-% xlabel('Examined hours');ylabel('MWh/h');title('Inflexible production');
-% legend('Power demand','Nuclear','Industry');bz_reorderLegend([3,1,2]);
-% 
-% subplot(2,2,2)    
-% plot(El_dem_tot(:,fig_r)+El_dem_exch(:,fig_r),'LineStyle','-');hold on;xlim([th_1 th_n]);
-% area(X',[El_pro_vre4(:,fig_r) El_pro_hyd(:,fig_r)-El_pro_vre4(:,fig_r) El_pro_vre1(:,fig_r) El_pro_vre2(:,fig_r) El_pro_vre3(:,fig_r) ],'LineStyle','none');xlim([th_1 th_n])
-% xlabel('Examined hours');ylabel('MWh/h');title('Power from RES plants (except bioenergy)');
-% legend('Power demand','Riverhydro', 'Hydropower (storage)','Solar PV','Wind onshore','Wind-offshore');bz_reorderLegend([6,1,2,3,4,5]);
-% xlim([th_1 th_n]);
-% subplot(2,2,3)
-% plot(El_dem_tot(:,fig_r)+El_dem_exch(:,fig_r),'LineStyle','-');hold on;xlim([th_1 th_n]);
-% area(X',[El_chp_ind_hh(th_1:th_n,fig_r) El_act_chp1(:,fig_r) El_act_chp2(:,fig_r) El_act_pp(:,fig_r)],'LineStyle','none');
-% xlabel('Examined hours');ylabel('MWh/h');title('Thermal power plants');
-% legend('Power demand','Industrial CHP','Local CHP','Central CHP','Power plant');bz_reorderLegend([5,1,2,3,4]);
-% 
-% subplot(2,2,4)
 plot(X',El_dem_tot(:,fig_r)+El_dem_exch(:,fig_r),'LineWidth',0.3,'Color','black');hold on;xlim([th_1 th_n]);           % The name should be adjusted based on each desirable production mode
 area(X',[El_act_nuc(:,fig_r) El_pro_hyd(:,fig_r),...
       El_pro_fix_hh(th_1:th_n,fig_r) El_act_chp1(:,fig_r)+El_act_chp2(:,fig_r),...
