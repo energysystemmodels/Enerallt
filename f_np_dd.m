@@ -14,24 +14,15 @@ decim=10;                           % Making costs bigger to avoid decimals (opt
 Supply=cell(n,nh);                 % initial accumulative supply curve
 Sup_dis=cell(n,nh);                % Supply curve after cost segmentation and moderation
 %-----------------------------------------------------------------------
-% 2) Lifting negative prices up, and later bringing them back
-Cost_min=zeros(n,nh);
-for t=1:nh
-    for i=1:n
-        Cost_min(i,t)=min(Cost0{i,t});
-    end
-end
-cost_min=min(min(Cost_min));       % The minimum amount of cost in the whole 24 h
-
-% Moderation of supply curve with the cost range and cost segments
+% 2) Moderation of supply curve with the cost range and cost segments
 Cost1=cell(n,nh);
 Pow1=cell(n,nh);
 for i=1:n
           for t=1:nh
               Supply{i,t}=cumsum(Pow0{i,t});
-             
-              [Sup_dis{i,t},Cost1{i,t}]=suppcurve_dis( Supply{i,t}, Cost0{i,t}-cost_min , Coff(i),Num_cost(i));
-              Pow1{i,t}=[0 Sup_dis{i,t}(1) diff(Sup_dis{i,t})]; 
+              [Sup_dis{i,t},Cost1{i,t}]=suppcurve_dis( Supply{i,t}, Cost0{i,t} , Coff(i),Num_cost(i));
+              %Pow1{i,t}=[0 Sup_dis{i,t}(1) diff(Sup_dis{i,t})];
+              Pow1{i,t}=[0 reshape(repmat((Pow0{i,t}/Num_cost(i))',1,Num_cost(i))',1,length(Pow0{i,t})*Num_cost(i))];
               Cost1{i,t}=[0 fix(decim.*(Cost1{i,t}))];     % MUST BE RETURNED LATER (Make them 10 times bigger and get rid of deciamls) 
           end
 
@@ -62,7 +53,7 @@ Exch_opt=Exch_opt0;
 clear f_opt_mar_dd
 %---------------------------------------------------------------------------------------------------------
 % 4) Formation of area prices
-Sys_p=Sys_p./decim+cost_min;
+Sys_p=Sys_p./decim;
 Area_p=zeros(n,nh);    % Area prices
 for t=1:nh
     for i=1:n 
@@ -90,7 +81,7 @@ for t=1:nh
     end
 end
     
-Area_p=Area_p./decim+cost_min;
+Area_p=Area_p./decim;
 %-------------------------------------------------------------------------------------
 % 4.1) Positioning of the last power producing unit in the power matrix
 
