@@ -1,6 +1,9 @@
 # Enerallt
 This repository hosts Enerallt, a multi-country power market and district heating model, developed and maintained by The Energy Efficiency and Systems Laboratory, Department of Mechanical Engineering, Aalto University, Finland. 
-The model is an hourly simulation of the operation and dipatch in a group of countries (or price areas) that are interconnected together in a common power market. The model in this repository is calibrated to data of the Nordic power market, including Finland, Norway, Sweden, West Denmark, and East Denmark. The main features of the model include:
+The model is an hourly simulation of the operation and dipatch in a group of countries (or price areas) that are interconnected together in a common power market. The model in this repository is calibrated to data of the Nordic power market, including Finland, Norway, Sweden, West Denmark, and East Denmark. 
+
+The main features of the model include:
+
 I. Simulation of hydropower water values at the country level
 II. Modelling of hourly district heating (DH) demand and supply, and the operation of combined heat adn power (CHP) plants in both electricity and DH systems
 III. Electricity market clearance based on the day-ahead planning horizon for up to 365 days, and represnting the adaptative strategies of some of power producers, where they adjust their future bids based on the outcome of the market in the past runs, i.e., assuming a limited foresight.
