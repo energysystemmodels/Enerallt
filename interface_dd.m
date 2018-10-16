@@ -17,7 +17,7 @@ h=24*4+10;                  % A sample hour to see the table results
 %---------------------------------------------------------------------------------
 % 1.1) Input data
 td_1=1;                % The beginning day of the analysis
-td_n=15;               % The last day of the analysis
+td_n=70;               % The last day of the analysis
 n=6;                   % Number of regions to be simulated
 Region_sys=1:5;        % The regions that are in one system price calculations
 Region_wv=[1 2 5];     % Regions that have hydropower water value calculations
@@ -177,7 +177,7 @@ for d=1:nd              % d: count of day
             Pow_mar{r,h}=Pow_pool(:,r);
             Cost1=Cost_mar{r,h};
             II=find(fix(Pow_pool(:,r)));
-            Power1=bz_subindex(Pow_pool(:,r),(fix(Pow_pool(:,r))>0),1);           % If some power production modes ar zero in that hour-region, they are excluded
+            Power1=bz_subindex(Pow_pool(:,r),(fix(Pow_pool(:,r))>0),1);           % If some power production modes are zero in that hour-region, they are excluded
             Cost1=Cost1(fix(Pow_pool(:,r))>0);
             [Cost_s, I_s]=sort(Cost1);               % Sorting the cost and power vectors ( for the creation of supply curve)
             Pow_sort{r,h}=Power1(I_s)';              % Constructing the power supply matrix for all the regions (cell)    
