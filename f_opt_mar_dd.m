@@ -81,9 +81,6 @@ LB=zeros(size(f));
 %-----------------------------------------
 % 3.4) Constraints
 % 3.4.1) Inequality constraints (A.X =< b)
-A=[];
-b=[];
-
 % The sum of electricity export in each node to other nodes shouldn't exceed the max network capacity (n^2*h equations)
 A1=spalloc(n^2*h,length(f),(n+1)*length(Cost{1,1})*h*n); 
 b1=zeros(n^2*h,1);              % Matrix of consonents  

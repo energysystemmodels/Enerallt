@@ -405,7 +405,7 @@ F_chp2_r=P_chp2./repmat(sum(P_chp2,1),size(P_chp2,1),1);
 % 4) Costs and taxes
 
 Cost_r=[0.2 0.2 0.2 0.2 0.2 0.2];              % Cost ranges for constructing supply curve, for example 0.2 means the cost range will be from the "base" until 20% higher. 20% (leave them zero if not needed)
-Cost_seg=[6 6 6 6 6 12];                    % Number of cost segments (in constructing supply curve), for example 5 means that the supply curve for that cost range will be divided by 5 (leave them zero if not needed)
+Cost_seg=[5 5 5 5 5 5];                    % Number of cost segments (in constructing supply curve), for example 5 means that the supply curve for that cost range will be divided by 5 (leave them zero if not needed)
 
 carbon_p=8;                                    % Carbon price €/tonne CO2
 de_price= 14;                                   % The price in Germany's area
