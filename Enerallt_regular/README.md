@@ -1,2 +1,2 @@
-# Enerallt
-A multi-country power market and district heating model
+# Enerallt Regular
+This is the most straightforward and widely tested version of the model.
