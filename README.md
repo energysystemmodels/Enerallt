@@ -11,7 +11,13 @@ The main features of the model include:
 
 Hence, the model doesn't seek to find the optimal solution for a yearlong period benefiting from a perfect foresight. The model can be used to investigate the most probable operation and outcome of an nternational power market, when there exists no central planning.
 
-# For more information, please refer to:
+# Usage and requirements 
+For using the model, you need MATLAB and under a valid license. Enerallt is licensed under Apache 2.0 (see License file for more details). To start working with the models do the following:
+1. Download the folder that you are interested, e.g., "Enerallt_regular".
+2. Open the interface file in MATLAB and run it for your desirable number of days.
+The models come with some default input data and calibration. The scripts are partly explanatory, but we will add a more straighforward documentation.
+
+# For more information about the structure of the model and some case studies, please refer to:
 1- Zakeri B., Virasjoki V., Syri S., Connolly D., Mathiesen B.V., Welsch M., Impact of Germany’s Energy Transition on the Nordic power market – A market-based multi-region energy system model, Energy, Vol 115 (part 3), PP 1640-1662, 2016. [(direct link)](https://doi.org/10.1016/j.energy.2016.07.083)
 
 2- Zakeri B., Price J., Zeyringer M., Keppo I., Mathiesen B.V., Syri S., The direct interconnection of the UK and Nordic power market – Impact on social welfare and renewable energy integration, Energy, Vol 162, PP 1193-1204, 2018. [(direct link)](https://doi.org/10.1016/j.energy.2018.08.019)
